@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from fastapi import APIRouter, Depends
 from api.controller import UserController, AuthController
 from api.schemas import UserCreate
