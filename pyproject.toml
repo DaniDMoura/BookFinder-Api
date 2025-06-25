@@ -13,3 +13,6 @@ dependencies = [
     "pyjwt>=2.10.1",
     "sqlalchemy[asyncio]>=2.0.41",
 ]
+
+[dependency-groups]
+dev = []
