@@ -10,7 +10,7 @@ from api.database import get_session
 from sqlalchemy.ext.asyncio import AsyncSession
 from api.models import Users, Wishlist
 from sqlalchemy import select
-
+from httpx import AsyncClient
 
 settings = Settings()
 pwd_context = PasswordHash.recommended()
@@ -197,3 +197,59 @@ class WishlistController():
       )
 
     return {'books': books }
+
+class BookController(WishlistController):
+    @staticmethod
+    async def request_book_data(
+        name: str,
+        current_user: Users = Depends(AuthController.get_current_user)
+    ) -> list[dict]:
+        url = "https://www.googleapis.com/books/v1/volumes"
+        params = {
+            "q": name,
+            "key": settings.GOOGLE_BOOKS_API_KEY,
+            "maxResults": 40,
+        }
+
+        async with AsyncClient(timeout=10) as client:
+            try:
+                response = await client.get(url, params=params)
+                response.raise_for_status()
+                data = await response.json()
+            except Exception as e:
+                raise HTTPException(
+                    status_code=HTTPStatus.BAD_REQUEST,
+                    detail=f"Error requesting data: {e}",
+                )
+
+        books = data.get("items", [])
+        book_details = []
+
+        for book in books:
+            info = book.get("volumeInfo", {})
+            sale_info = book.get("saleInfo", {})
+
+            title = info.get("title", "Unknown")
+            authors = ", ".join(info.get("authors", ["Unknown"]))
+            publisher = info.get("publisher", "Unknown")
+            published_date = info.get("publishedDate", "Unknown")
+            image = info.get("imageLinks", {}).get("thumbnail")
+            description = info.get("description", "No description available")
+            buy_link = sale_info.get("buyLink", None)
+            language = info.get("language", "Unknown")
+            page_count = info.get("pageCount", 0)
+
+            book_details.append({
+                "title": title,
+                "authors": authors,
+                "publisher": publisher,
+                "published_date": published_date,
+                "image": image,
+                "description": description,
+                "buy_link": buy_link,
+                "language": language,
+                "page_count": page_count,
+            })
+
+        return book_details
+
