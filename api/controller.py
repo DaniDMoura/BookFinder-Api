@@ -266,4 +266,8 @@ class BookController(WishlistController):
                 }
             )
 
-        return book_details
+        return {
+            "count": len(book_details),
+            "results": book_details
+        }
+

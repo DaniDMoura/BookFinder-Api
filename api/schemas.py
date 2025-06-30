@@ -40,3 +40,8 @@ class ListWishlist(BaseModel):
 class AddWishlist(BaseModel):
     message: str
     book_id: int
+
+
+class RequestBooks(BaseModel):
+    count: int
+    results: List[dict]
